@@ -140,5 +140,20 @@ namespace Microsoft.EntityFrameworkCore.Storage
         /// <param name="name"> The name of the savepoint to be released. </param>
         /// <returns> An SQL string to release the savepoint. </returns>
         string GenerateReleaseSavepointStatement(string name);
+
+        /// <summary>
+        ///     Generates a SQL SET statement that changes the current session handling of specific information.
+        /// </summary>
+        /// <param name="name"> The variable name. </param>
+        /// <param name="value"> The value to set the variable to. </param>
+        /// <returns> The generated SQL. </returns>
+        string SetSessionVariableStatement(string name, string value);
+
+        /// <summary>
+        ///     Generates a SQL PRINT statement.
+        /// </summary>
+        /// <param name="text"> The print text. </param>
+        /// <returns> The generated SQL. </returns>
+        string GeneratePrint(string text);
     }
 }

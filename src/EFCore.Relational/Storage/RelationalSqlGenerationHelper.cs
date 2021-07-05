@@ -222,5 +222,20 @@ namespace Microsoft.EntityFrameworkCore.Storage
         /// <returns> An SQL string to release the savepoint. </returns>
         public virtual string GenerateReleaseSavepointStatement(string name)
             => "RELEASE SAVEPOINT " + DelimitIdentifier(name) + StatementTerminator;
+
+        /// <summary>
+        ///     Generates a SQL SET statement that changes the current session handling of specific information.
+        /// </summary>
+        /// <param name="name"> The variable name. </param>
+        /// <param name="value"> The value to set the variable to. </param>
+        /// <returns> The generated SQL. </returns>
+        public virtual string SetSessionVariableStatement(string name, string value) => string.Empty;
+
+        /// <summary>
+        ///     Generates a SQL PRINT statement.
+        /// </summary>
+        /// <param name="text"> The print text. </param>
+        /// <returns> The generated SQL. </returns>
+        public virtual string GeneratePrint(string text) => string.Empty;
     }
 }
