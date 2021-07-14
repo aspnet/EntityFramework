@@ -1151,11 +1151,18 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Internal
                     Check.DebugAssert(navigation.DeclaringEntityType == Metadata, "navigation.DeclaringEntityType != Metadata");
 
                     var navigationConfigurationSource = navigation.GetConfigurationSource();
-                    if (foreignKey.GetConfigurationSource() != navigationConfigurationSource)
+                    if (foreignKey.GetConfigurationSource() != navigationConfigurationSource
+                        && (navigation.IsOnDependent
+                            || !foreignKey.IsOwnership))
                     {
                         var removedNavigation = foreignKey.Builder.HasNavigation(
                             (MemberInfo?)null, navigation.IsOnDependent, configurationSource);
                         Check.DebugAssert(removedNavigation != null, "removedNavigation is null");
+                    }
+                    else if (foreignKey.IsOwnership
+                        && configurationSource.Overrides(foreignKey.DeclaringEntityType.GetConfigurationSource()))
+                    {
+                        Metadata.Model.Builder.HasNoEntityType(foreignKey.DeclaringEntityType, configurationSource);
                     }
                     else
                     {
@@ -1223,13 +1230,20 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Internal
                     if (derivedNavigation != null)
                     {
                         var foreignKey = derivedNavigation.ForeignKey;
-                        if (foreignKey.GetConfigurationSource() != derivedNavigation.GetConfigurationSource())
+                        if (foreignKey.GetConfigurationSource() != derivedNavigation.GetConfigurationSource()
+                            && (derivedNavigation.IsOnDependent
+                                || !foreignKey.IsOwnership))
                         {
                             if (derivedNavigation.GetConfigurationSource() != ConfigurationSource.Explicit)
                             {
                                 foreignKey.Builder.HasNavigation(
                                     (MemberInfo?)null, derivedNavigation.IsOnDependent, configurationSource);
                             }
+                        }
+                        else if (foreignKey.IsOwnership
+                            && configurationSource.Overrides(foreignKey.DeclaringEntityType.GetConfigurationSource()))
+                        {
+                            Metadata.Model.Builder.HasNoEntityType(foreignKey.DeclaringEntityType, configurationSource);
                         }
                         else if (foreignKey.GetConfigurationSource() != ConfigurationSource.Explicit)
                         {
@@ -3711,13 +3725,6 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Internal
                             ? ModelBuilder.SharedTypeEntity(
                                 existingTargetType.Name, existingTargetType.ClrType, configurationSource.Value, targetShouldBeOwned)
                             : ModelBuilder.Entity(existingTargetType.ClrType, configurationSource.Value, targetShouldBeOwned);
-                }
-
-                if (configurationSource == null
-                    || existingNavigation.ForeignKey.DeclaringEntityType.Builder
-                        .HasNoRelationship(existingNavigation.ForeignKey, configurationSource.Value) == null)
-                {
-                    return null;
                 }
             }
 
