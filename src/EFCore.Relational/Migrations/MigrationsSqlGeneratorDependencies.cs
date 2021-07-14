@@ -61,6 +61,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             ISqlGenerationHelper sqlGenerationHelper,
             IRelationalTypeMappingSource typeMappingSource,
             ICurrentDbContext currentContext,
+            IColumnModificationFactory columnModificationFactory,
             ILoggingOptions loggingOptions,
             IRelationalCommandDiagnosticsLogger logger,
             IDiagnosticsLogger<DbLoggerCategory.Migrations> migrationsLogger)
@@ -70,6 +71,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             Check.NotNull(sqlGenerationHelper, nameof(sqlGenerationHelper));
             Check.NotNull(typeMappingSource, nameof(typeMappingSource));
             Check.NotNull(currentContext, nameof(currentContext));
+            Check.NotNull(columnModificationFactory, nameof(columnModificationFactory));
             Check.NotNull(loggingOptions, nameof(loggingOptions));
             Check.NotNull(logger, nameof(logger));
             Check.NotNull(migrationsLogger, nameof(migrationsLogger));
@@ -79,6 +81,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             UpdateSqlGenerator = updateSqlGenerator;
             TypeMappingSource = typeMappingSource;
             CurrentContext = currentContext;
+            ColumnModificationFactory = columnModificationFactory;
             LoggingOptions = loggingOptions;
             Logger = logger;
             MigrationsLogger = migrationsLogger;
@@ -108,6 +111,11 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         ///     Contains the <see cref="DbContext" /> currently in use.
         /// </summary>
         public ICurrentDbContext CurrentContext { get; init; }
+
+        /// <summary>
+        ///     The ColumnModification factory.
+        /// </summary>
+        public IColumnModificationFactory ColumnModificationFactory { get; init; }
 
         /// <summary>
         ///     The logging options.

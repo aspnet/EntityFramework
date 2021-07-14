@@ -1,10 +1,12 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 using Microsoft.EntityFrameworkCore.SqlServer.Update.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Update.Internal;
 using Microsoft.EntityFrameworkCore.TestUtilities;
 using Xunit;
 
@@ -43,14 +45,26 @@ namespace Microsoft.EntityFrameworkCore.Update
 
             Assert.True(
                 batch.AddCommand(
-                    new ModificationCommand("T1", null, new ParameterNameGenerator().GenerateNext, false, null, null)));
+                    CreateModificationCommand("T1", null, columnModifications: null, false)));
             Assert.False(
                 batch.AddCommand(
-                    new ModificationCommand("T1", null, new ParameterNameGenerator().GenerateNext, false, null, null)));
+                    CreateModificationCommand("T1", null, columnModifications: null, false)));
         }
 
         private class FakeDbContext : DbContext
         {
+        }
+
+        private static ModificationCommand CreateModificationCommand(
+            string name,
+            string schema,
+            IReadOnlyList<ColumnModification> columnModifications,
+            bool sensitiveLoggingEnabled)
+        {
+            var modificationCommandParametets = new ModificationCommandParameters(
+                name, schema, columnModifications, sensitiveLoggingEnabled);
+
+            return new ModificationCommand(modificationCommandParametets);
         }
     }
 }
