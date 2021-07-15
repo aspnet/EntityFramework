@@ -179,6 +179,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
             var dropForeignKeyOperations = new List<MigrationOperation>();
             var dropOperations = new List<MigrationOperation>();
             var dropColumnOperations = new List<MigrationOperation>();
+            var dropComputedColumnOperations = new List<MigrationOperation>();
             var dropTableOperations = new List<DropTableOperation>();
             var ensureSchemaOperations = new List<MigrationOperation>();
             var createSequenceOperations = new List<MigrationOperation>();
@@ -209,7 +210,14 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
                 }
                 else if (type == typeof(DropColumnOperation))
                 {
-                    dropColumnOperations.Add(operation);
+                    if (string.IsNullOrWhiteSpace(((ColumnOperation)operation).ComputedColumnSql))
+                    {
+                        dropColumnOperations.Add(operation);
+                    }
+                    else
+                    {
+                        dropComputedColumnOperations.Add(operation);
+                    }
                 }
                 else if (type == typeof(DropTableOperation))
                 {
@@ -352,6 +360,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
                 .Concat(dropTableOperations)
                 .Concat(dropOperations)
                 .Concat(sourceDataOperations)
+                .Concat(dropComputedColumnOperations)
                 .Concat(dropColumnOperations)
                 .Concat(ensureSchemaOperations)
                 .Concat(renameTableOperations)
@@ -1078,9 +1087,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
             var targetMapping = target.PropertyMappings.First();
             var targetTypeMapping = targetMapping.TypeMapping;
 
-            Initialize(
-                operation, target, targetTypeMapping, target.IsNullable,
-                target.GetAnnotations(), inline);
+            Initialize(operation, target, targetTypeMapping, target.IsNullable, target.GetAnnotations(), inline);
 
             yield return operation;
         }
@@ -1101,7 +1108,11 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
                 Table = table.Name,
                 Name = source.Name
             };
-            operation.AddAnnotations(MigrationsAnnotations.ForRemove(source));
+
+            var sourceMapping = source.PropertyMappings.First();
+            var sourceTypeMapping = sourceMapping.TypeMapping;
+
+            Initialize(operation, source, sourceTypeMapping, source.IsNullable, MigrationsAnnotations.ForRemove(source), inline: false);
 
             diffContext.AddDrop(source, operation);
 
