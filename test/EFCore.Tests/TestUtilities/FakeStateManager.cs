@@ -216,5 +216,11 @@ namespace Microsoft.EntityFrameworkCore.TestUtilities
         {
             throw new NotImplementedException();
         }
+
+        public (InternalEntityEntry, bool) GetOrCreateEntryReturnAlreadyExists(object entity) =>
+            throw new NotImplementedException();
+
+        public (InternalEntityEntry, bool) GetOrCreateEntryReturnAlreadyExists(object entity, IEntityType entityType) =>
+            throw new NotImplementedException();
     }
 }
