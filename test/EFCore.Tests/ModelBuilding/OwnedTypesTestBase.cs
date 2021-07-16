@@ -764,6 +764,7 @@ namespace Microsoft.EntityFrameworkCore.ModelBuilding
             {
                 var modelBuilder = CreateModelBuilder();
 
+                modelBuilder.Ignore<Product>();
                 modelBuilder.Owned<Order>();
                 modelBuilder.Entity<Customer>()
                     .OwnsMany(c => c.Orders)

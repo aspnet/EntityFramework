@@ -546,6 +546,11 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Internal
         /// </summary>
         public virtual InternalModelBuilder? HasNoEntityType(EntityType entityType, ConfigurationSource configurationSource)
         {
+            if (!entityType.IsInModel)
+            {
+                return this;
+            }
+
             var entityTypeConfigurationSource = entityType.GetConfigurationSource();
             if (!configurationSource.Overrides(entityTypeConfigurationSource))
             {

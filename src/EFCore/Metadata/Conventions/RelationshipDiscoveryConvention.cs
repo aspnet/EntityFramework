@@ -84,34 +84,28 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
                     continue;
                 }
 
+                var candidateTargetEntityType = candidateTargetEntityTypeBuilder.Metadata;
                 if (!entityType.IsInModel)
                 {
                     // Current entity type was removed while the target entity type was being added
-                    foreach (var relationshipCandidate in relationshipCandidates.Values)
-                    {
-                        var targetType = relationshipCandidate.TargetTypeBuilder.Metadata;
-                        if (targetType.IsInModel
-                            && IsImplicitlyCreatedUnusedType(targetType))
-                        {
-                            targetType.Builder.ModelBuilder.HasNoEntityType(targetType);
-                        }
-                    }
-
-                    return Array.Empty<RelationshipCandidate>();
+                    relationshipCandidates[candidateTargetEntityType] =
+                        new RelationshipCandidate(candidateTargetEntityTypeBuilder, new List<PropertyInfo>(), new List<PropertyInfo>(), false);
+                    break;
                 }
 
-                var candidateTargetEntityType = candidateTargetEntityTypeBuilder.Metadata;
                 if (candidateTargetEntityType.IsKeyless
                     || (candidateTargetEntityType.IsOwned()
                         && HasDeclaredAmbiguousNavigationsTo(entityType, targetClrType)))
                 {
+                    relationshipCandidates[candidateTargetEntityType] =
+                        new RelationshipCandidate(candidateTargetEntityTypeBuilder, new List<PropertyInfo>(), new List<PropertyInfo>(), false);
                     continue;
                 }
 
                 Check.DebugAssert(entityType.ClrType != targetClrType
                     || !candidateTargetEntityType.IsOwned()
                     || candidateTargetEntityType.FindOwnership()?.PrincipalToDependent?.Name == navigationPropertyInfo.GetSimpleMemberName(),
-                    "New self-referencing ownerships shouldn't be discovered");
+                    "Self-referencing ownerships shouldn't be discovered");
 
                 var targetOwnership = candidateTargetEntityType.FindOwnership();
                 var shouldBeOwnership = candidateTargetEntityType.IsOwned()
@@ -130,6 +124,8 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
                 {
                     // Only the owner or nested ownees can have navigations to an owned type
                     // Also skip non-ownership navigations from the owner
+                    relationshipCandidates[candidateTargetEntityType] =
+                        new RelationshipCandidate(candidateTargetEntityTypeBuilder, new List<PropertyInfo>(), new List<PropertyInfo>(), false);
                     continue;
                 }
 
@@ -138,6 +134,8 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
                     && navigationPropertyInfo.PropertyType != targetClrType)
                 {
                     // Don't try to configure a collection on an owned type unless it represents a sub-ownership
+                    relationshipCandidates[candidateTargetEntityType] =
+                        new RelationshipCandidate(candidateTargetEntityTypeBuilder, new List<PropertyInfo>(), new List<PropertyInfo>(), false);
                     continue;
                 }
 
@@ -249,7 +247,18 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
             var candidates = new List<RelationshipCandidate>();
             foreach (var relationshipCandidate in relationshipCandidates.Values)
             {
-                if (relationshipCandidate.TargetTypeBuilder.Metadata.IsInModel)
+                var targetType = relationshipCandidate.TargetTypeBuilder.Metadata;
+                if (!entityTypeBuilder.Metadata.IsInModel
+                    || relationshipCandidate.NavigationProperties.Count == 0)
+                {
+                    if (IsImplicitlyCreatedUnusedType(targetType))
+                    {
+                        targetType.Builder.ModelBuilder.HasNoEntityType(targetType);
+                    }
+                    continue;
+                }
+
+                if (targetType.IsInModel)
                 {
                     candidates.Add(relationshipCandidate);
                     continue;
